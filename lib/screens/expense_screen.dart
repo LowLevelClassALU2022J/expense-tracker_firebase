@@ -1,0 +1,160 @@
+import 'package:flutter/material.dart';
+import 'package:expense_tracker/widgets/credit_card_widget.dart';
+
+class ExpenseScreen extends StatefulWidget {
+  const ExpenseScreen({super.key});
+
+  @override
+  _ExpenseScreenState createState() => _ExpenseScreenState();
+}
+
+class _ExpenseScreenState extends State<ExpenseScreen> {
+  final List<String> _categories = ['Rent', 'Groceries', 'Utilities', 'Others'];
+  String _selectedCategory = 'Rent';
+  final _expenseController = TextEditingController();
+
+  // Hard-coded financial data (to be replaced with dynamic data later on)
+  final double _totalBalance = 1500.00;
+  final double _income = 1000.00;
+  final double _expense = 500.00;
+
+  void _addCategory(String newCategory) {
+    if (newCategory.trim().isNotEmpty) {
+      setState(() {
+        _categories.add(newCategory);
+        _selectedCategory = newCategory;
+      });
+    }
+  }
+
+  Future<void> _showAddCategoryDialog() async {
+    final TextEditingController categoryController = TextEditingController();
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add New Expense Category'),
+          content: TextFormField(
+            controller: categoryController,
+            decoration: const InputDecoration(
+              labelText: 'Category Name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _addCategory(categoryController.text);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Add Expense'),
+        backgroundColor: const Color(0xFF429690),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              SizedBox(
+                height: 170,
+                child: CreditCardWidget(
+                  totalBalance: _totalBalance,
+                  totalIncome: _income,
+                  totalExpenses: _expense,
+                ),
+              ),
+              const SizedBox(height: 15),
+              TextFormField(
+                controller: _expenseController,
+                decoration: const InputDecoration(
+                  labelText: 'Expense Amount',
+                  hintText: 'Enter your expense',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.money_off, color: Color(0xFF429690)),
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    value: _selectedCategory,
+                    style: const TextStyle(color: Color(0xFF429690)),
+                    items: _categories.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      setState(() {
+                        _selectedCategory = newValue!;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Description (Optional)',
+                  hintText: 'Enter description',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.description, color: Color(0xFF429690)),
+                ),
+                keyboardType: TextInputType.text,
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: _showAddCategoryDialog,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF429690),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('Add New Expense Category'),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  // Handle the submission of the expense data
+                  print('Expense: ${_expenseController.text}');
+                  print('Category: $_selectedCategory');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF429690),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('Add Expense'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
