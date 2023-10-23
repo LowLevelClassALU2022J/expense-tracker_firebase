@@ -1,4 +1,8 @@
 import 'package:expense_tracker/pages/signup_page.dart';
+import 'package:expense_tracker/screens/expense_categories_list.dart';
+import 'package:expense_tracker/screens/expense_list.dart';
+import 'package:expense_tracker/screens/income_categories_list.dart';
+import 'package:expense_tracker/screens/income_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/pages/main_page.dart';
 import 'package:expense_tracker/screens/splash_screen.dart';
@@ -67,7 +71,10 @@ class ExpenseTracker extends StatelessWidget {
         '/intro': (context) => const IntroPage(),
         '/main': (context) => const MainPage(),
         '/splash': (context) => const SplashScreen(),
-        // '/settings': (context) => const MainPage(),
+        '/incomeList': (context) => const IncomeListScreen(),
+        '/incomeCategoryList': (context) => EditIncomeCategoryScreen(),
+        '/expenseList': (context) => const ExpenseListScreen(),
+        '/expenseCategoryList': (context) => EditExpenseCategoryScreen(),
       },
     );
   }
