@@ -1,3 +1,5 @@
+import 'package:expense_tracker/services/firestore_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -12,7 +14,13 @@ class _ReportScreenState extends State<ReportScreen>
     with SingleTickerProviderStateMixin {
   // Segment Control
   int _selectedValue = 0; // 0 for income, 1 for expense
-  String _chartType = 'Bar'; // Initial chart type
+
+  final _firestoreService =
+      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
+  late final Future<List<double>> _incomes;
+  late final Future<List<double>> _expenses;
+  double? topIncome;
+  double? topExpense;
 
   // Tab Control
   late TabController _tabController;
@@ -21,6 +29,27 @@ class _ReportScreenState extends State<ReportScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _incomes = _firestoreService.getIncomesList();
+    _expenses = _firestoreService.getExpensesList();
+    fetchTopValues();
+  }
+
+  void fetchTopValues() async {
+    final incomesList = await _firestoreService.getIncomesList();
+    final expensesList = await _firestoreService.getExpensesList();
+
+    if (incomesList.isNotEmpty) {
+      setState(() {
+        topIncome =
+            incomesList.reduce((curr, next) => curr > next ? curr : next);
+      });
+    }
+    if (expensesList.isNotEmpty) {
+      setState(() {
+        topExpense =
+            expensesList.reduce((curr, next) => curr > next ? curr : next);
+      });
+    }
   }
 
   @override
@@ -105,48 +134,11 @@ class _ReportScreenState extends State<ReportScreen>
                         ),
                       ),
                     ),
-                  ]), // Buttons to select chart type
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => setState(() => _chartType = 'Bar'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _chartType == 'Bar'
-                              ? const Color(0xFF429690)
-                              : Colors.grey,
-                        ),
-                        child: const Text('Bar Chart'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => setState(() => _chartType = 'Line'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _chartType == 'Line'
-                              ? const Color(0xFF429690)
-                              : Colors.grey,
-                        ),
-                        child: const Text('Line Chart'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => setState(() => _chartType = 'Pie'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _chartType == 'Pie'
-                              ? const Color(0xFF429690)
-                              : Colors.grey,
-                        ),
-                        child: const Text('Pie Chart'),
-                      ),
-                    ],
-                  ),
-
-                  // Conditional rendering of charts
-                  if (_chartType == 'Bar') _buildBarChart(),
-                  if (_chartType == 'Line') _buildLineChart(),
-                  if (_chartType == 'Pie') _buildPieChart(),
+                  ]),
+                  _buildLineChart(),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
             const SizedBox(height: 20),
             // Top Income/Expense Indicator
             ListTile(
@@ -155,22 +147,14 @@ class _ReportScreenState extends State<ReportScreen>
                 style: const TextStyle(
                     color: Color(0xFF429690), fontWeight: FontWeight.bold),
               ),
-              subtitle: const Text('Placeholder Data'), // Placeholder data
+              subtitle: Text(_selectedValue == 0
+                  ? 'Amount: \$${topIncome ?? 'N/A'}'
+                  : 'Amount: \$${topExpense ?? 'N/A'}'), // Updated data
               leading: Icon(
                 _selectedValue == 0 ? Icons.arrow_upward : Icons.arrow_downward,
                 color: const Color(0xFF429690),
               ),
             ),
-            // Expanded(
-            //   child: TabBarView(
-            //     controller: _tabController,
-            //     children: [
-            //       _buildDailyView(),
-            //       _buildWeeklyView(),
-            //       _buildMonthlyView(),
-            //     ],
-            //   ),
-            // ),
           ],
         ),
       ),
@@ -191,183 +175,71 @@ class _ReportScreenState extends State<ReportScreen>
     });
   }
 
-  Widget _buildBarChart() {
-    return SizedBox(
-        height: 220, // Adjusted size
-        child: BarChart(
-          BarChartData(
-            barGroups: getBarGroups(),
-            titlesData: FlTitlesData(
-              leftTitles: SideTitles(showTitles: false),
-              bottomTitles: SideTitles(
-                showTitles: true,
-                getTextStyles: (BuildContext context, double value) =>
-                    const TextStyle(
-                        color: Color(0xFF429690),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14),
-                getTitles: (double value) {
-                  switch (value.toInt()) {
-                    case 0:
-                      return 'M';
-                    case 1:
-                      return 'T';
-                    case 2:
-                      return 'W';
-                    case 3:
-                      return 'T';
-                    case 4:
-                      return 'F';
-                    case 5:
-                      return 'S';
-                    case 6:
-                      return 'S';
-                    default:
-                      return '';
-                  }
-                },
-              ),
-            ),
-            borderData: FlBorderData(
-              show: false,
-            ),
-            barTouchData: BarTouchData(
-              touchTooltipData: BarTouchTooltipData(
-                tooltipBgColor: Colors.blueAccent,
-              ),
-              touchCallback: (barTouchResponse) {},
-              handleBuiltInTouches: true,
-            ),
-          ),
-        ));
-  }
-
   Widget _buildLineChart() {
-    return SizedBox(
-      height: 220,
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(show: false),
-          borderData: FlBorderData(
-            show: true,
-            border: const Border(
-              bottom: BorderSide(
-                color: Color(0xFF429690),
-                width: 2,
+    return FutureBuilder<List<double>>(
+      // Decide which future to use based on the segment control value
+      future: _selectedValue == 0 ? _incomes : _expenses,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // Show a loading indicator while waiting for the data
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          // Handle any errors that occurred while fetching the data
+          return const Center(child: Text("Error fetching data"));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          // Handle the scenario when there's no data
+          return const Center(child: Text("No data available"));
+        } else {
+          // Convert the data into FlSpot
+          List<FlSpot> spots = [];
+          for (int i = 0; i < snapshot.data!.length; i++) {
+            spots.add(FlSpot(i.toDouble(), snapshot.data![i].toDouble()));
+          }
+
+          double maxY =
+              snapshot.data!.reduce((curr, next) => curr > next ? curr : next);
+          maxY = maxY +
+              (maxY *
+                  0.15); // Add 15% to the maxY value to show some space at the top
+          double maxX = snapshot.data!.length - 1.0;
+
+          return SizedBox(
+            height: 220,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(show: false),
+                titlesData: FlTitlesData(show: false),
+                borderData: FlBorderData(
+                  show: true,
+                  border: const Border(
+                    bottom: BorderSide(
+                      color: Color(0xFF429690),
+                      width: 2,
+                    ),
+                    left: BorderSide(color: Colors.transparent),
+                    right: BorderSide(color: Colors.transparent),
+                    top: BorderSide(color: Colors.transparent),
+                  ),
+                ),
+                minX: 0,
+                maxX: maxX,
+                minY: 0,
+                maxY: maxY,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    colors: [const Color(0xFF429690)],
+                    barWidth: 4,
+                    isStrokeCapRound: true,
+                    belowBarData: BarAreaData(show: false),
+                  ),
+                ],
               ),
-              left: BorderSide(color: Colors.transparent),
-              right: BorderSide(color: Colors.transparent),
-              top: BorderSide(color: Colors.transparent),
             ),
-          ),
-          minX: 0,
-          maxX: 6,
-          minY: 0,
-          maxY: 15,
-          lineBarsData: [
-            LineChartBarData(
-              spots: [
-                FlSpot(0, 3),
-                FlSpot(1, 1),
-                FlSpot(2, 5),
-                FlSpot(3, 7),
-                FlSpot(4, 5),
-                FlSpot(5, 3),
-                FlSpot(6, 4),
-              ],
-              isCurved: true,
-              colors: [const Color(0xFF429690)],
-              barWidth: 4,
-              isStrokeCapRound: true,
-              belowBarData: BarAreaData(show: false),
-            ),
-          ],
-        ),
-      ),
+          );
+        }
+      },
     );
-  }
-
-  Widget _buildPieChart() {
-    return SizedBox(
-      height: 220,
-      child: PieChart(
-        PieChartData(
-          sectionsSpace: 0,
-          centerSpaceRadius: 40,
-          sections: [
-            PieChartSectionData(
-              color: const Color(0xFF429690),
-              value: 40,
-              title: '40%',
-              radius: 50,
-              titleStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xffffffff)),
-            ),
-            PieChartSectionData(
-              color: Colors.orange,
-              value: 30,
-              title: '30%',
-              radius: 50,
-              titleStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xffffffff)),
-            ),
-            PieChartSectionData(
-              color: Colors.blue,
-              value: 15,
-              title: '15%',
-              radius: 50,
-              titleStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xffffffff)),
-            ),
-            PieChartSectionData(
-              color: Colors.green,
-              value: 15,
-              title: '15%',
-              radius: 50,
-              titleStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xffffffff)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDailyView() {
-    // Use your existing chart widgets (_buildBarChart, _buildLineChart, or _buildPieChart)
-    // Or create different charts specific to the daily view
-    if (_chartType == 'Bar') return _buildBarChart();
-    if (_chartType == 'Line') return _buildLineChart();
-    if (_chartType == 'Pie') return _buildPieChart();
-    return Container(); // Default empty container, should never reach here.
-  }
-
-  Widget _buildWeeklyView() {
-    // Create charts specific to the weekly view.
-    // This could be a different implementation or using different data for the chart.
-    // For simplicity, returning the same as daily.
-    if (_chartType == 'Bar') return _buildBarChart();
-    if (_chartType == 'Line') return _buildLineChart();
-    if (_chartType == 'Pie') return _buildPieChart();
-    return Container(); // Default empty container, should never reach here.
-  }
-
-  Widget _buildMonthlyView() {
-    // Create charts specific to the monthly view.
-    // This could be a different implementation or using different data for the chart.
-    // For simplicity, returning the same as daily.
-    if (_chartType == 'Bar') return _buildBarChart();
-    if (_chartType == 'Line') return _buildLineChart();
-    if (_chartType == 'Pie') return _buildPieChart();
-    return Container(); // Default empty container, should never reach here.
   }
 }
