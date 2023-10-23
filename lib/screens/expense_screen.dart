@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:expense_tracker/widgets/credit_card_widget.dart';
+import 'package:expense_tracker/models/expense_category.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_tracker/services/firestore_service.dart';
 
 class ExpenseScreen extends StatefulWidget {
   const ExpenseScreen({super.key});
@@ -9,22 +11,50 @@ class ExpenseScreen extends StatefulWidget {
 }
 
 class _ExpenseScreenState extends State<ExpenseScreen> {
-  final List<String> _categories = ['Rent', 'Groceries', 'Utilities', 'Others'];
-  String _selectedCategory = 'Rent';
   final _expenseController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _firestoreService =
+      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
 
-  // Hard-coded financial data (to be replaced with dynamic data later on)
-  final double _totalBalance = 1500.00;
-  final double _income = 1000.00;
-  final double _expense = 500.00;
+  List<ExpenseCategory> _categories = [];
+  ExpenseCategory? _selectedCategory;
 
-  void _addCategory(String newCategory) {
-    if (newCategory.trim().isNotEmpty) {
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+  }
+
+  void _fetchCategories() {
+    _firestoreService.getExpenseCategories().listen((categories) {
       setState(() {
-        _categories.add(newCategory);
-        _selectedCategory = newCategory;
+        _categories = categories;
+        if (_categories.isNotEmpty) _selectedCategory = _categories[0];
       });
+    });
+  }
+
+  Future<void> _addCategory(String newCategoryName) async {
+    final category =
+        await _firestoreService.addExpenseCategory(newCategoryName);
+    if (category != null) {
+      _updateUIWithNewCategory(category);
+    } else {
+      _showMessage('Category already exists');
     }
+  }
+
+  void _updateUIWithNewCategory(ExpenseCategory category) {
+    setState(() {
+      _categories.add(category);
+      _selectedCategory = category;
+    });
+    _showMessage('Category added successfully');
+  }
+
+  void _showMessage(String message) {
+    final snackBar = SnackBar(content: Text(message));
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   Future<void> _showAddCategoryDialog() async {
@@ -74,15 +104,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              SizedBox(
-                height: 170,
-                child: CreditCardWidget(
-                  totalBalance: _totalBalance,
-                  totalIncome: _income,
-                  totalExpenses: _expense,
-                ),
-              ),
-              const SizedBox(height: 15),
               TextFormField(
                 controller: _expenseController,
                 decoration: const InputDecoration(
@@ -101,16 +122,17 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
+                  child: DropdownButton<ExpenseCategory>(
                     isExpanded: true,
                     value: _selectedCategory,
                     style: const TextStyle(color: Color(0xFF429690)),
-                    items: _categories.map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
+                    items: _categories.map((ExpenseCategory category) {
+                      return DropdownMenuItem<ExpenseCategory>(
+                        value: category,
+                        child: Text(category.name),
                       );
                     }).toList(),
+                    hint: const Text('Select Category'),
                     onChanged: (newValue) {
                       setState(() {
                         _selectedCategory = newValue!;
@@ -121,6 +143,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               ),
               const SizedBox(height: 10),
               TextFormField(
+                controller: _descriptionController,
+                maxLength: 21,
                 decoration: const InputDecoration(
                   labelText: 'Description (Optional)',
                   hintText: 'Enter description',
@@ -131,6 +155,26 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               ),
               const SizedBox(height: 10),
               ElevatedButton(
+                onPressed: () {
+                  // Save the new expense to Firestore
+                  _firestoreService.addExpense(
+                    double.parse(_expenseController.text),
+                    _selectedCategory!.id,
+                    _selectedCategory!.name,
+                    _descriptionController.text,
+                  );
+                  // clear the text fields
+                  _expenseController.clear();
+                  _descriptionController.clear();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF429690),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('Add Expense'),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
                 onPressed: _showAddCategoryDialog,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF429690),
@@ -138,18 +182,27 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                 ),
                 child: const Text('Add New Expense Category'),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 60),
               ElevatedButton(
                 onPressed: () {
-                  // Handle the submission of the expense data
-                  print('Expense: ${_expenseController.text}');
-                  print('Category: $_selectedCategory');
+                  Navigator.pushNamed(context, '/expenseList');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF429690),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text('Add Expense'),
+                child: const Text('View All Expenses'),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/expenseCategoryList');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF429690),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('View All Expense Categories'),
               ),
             ],
           ),
