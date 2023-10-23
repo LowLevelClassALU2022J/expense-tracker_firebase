@@ -1,18 +1,48 @@
+import 'package:expense_tracker/services/firestore_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class CreditCardWidget extends StatelessWidget {
-  final double totalBalance;
-  final double totalIncome;
-  final double totalExpenses;
+  late Future<double> totalBalance;
+  late Future<double> totalIncome;
+  late Future<double> totalExpenses;
 
-  const CreditCardWidget({super.key, 
-    required this.totalBalance,
-    required this.totalIncome,
-    required this.totalExpenses,
-  });
+  final _firestoreService =
+      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
+
+  CreditCardWidget({super.key});
+
+  Future<List<double>> getCardData() async {
+    double balance = await _firestoreService.getTotalBalance();
+    double income = await _firestoreService.getTotalIncome();
+    double expenses = await _firestoreService.getTotalExpense();
+    return [balance, income, expenses];
+  }
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<List<double>>(
+      future: getCardData(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          }
+          final data = snapshot.data!;
+          return _buildCreditCard(data[0], data[1], data[2]);
+        } else {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Color.fromARGB(255, 47, 125, 121),
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildCreditCard(
+      double totalBalance, double totalIncome, double totalExpenses) {
     return Container(
       height: 170,
       width: 320,
@@ -67,11 +97,17 @@ class CreditCardWidget extends StatelessWidget {
                   icon: Icons.arrow_downward,
                   label: 'Income',
                   amount: totalIncome,
+                  textColor: Colors.white,
                 ),
                 _buildInfoColumn(
                   icon: Icons.arrow_upward,
                   label: 'Expenses',
                   amount: totalExpenses,
+                  textColor: totalExpenses > totalIncome
+                      ? Colors.red
+                      : totalExpenses == totalIncome
+                          ? const Color.fromRGBO(239, 108, 0, 1)
+                          : Colors.white,
                 ),
               ],
             ),
@@ -85,6 +121,7 @@ class CreditCardWidget extends StatelessWidget {
     required IconData icon,
     required String label,
     required double amount,
+    required Color textColor,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,14 +151,13 @@ class CreditCardWidget extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           '\$ ${amount.toStringAsFixed(2)}',
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 17,
-            color: Colors.white,
-          ),
+          style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 17,
+              // lamda func to return color based on textColor value compared to Colors.red otherwise Colors.white
+              color: textColor),
         ),
       ],
     );
   }
 }
-
