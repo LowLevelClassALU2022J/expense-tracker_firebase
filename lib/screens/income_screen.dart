@@ -1,5 +1,7 @@
+import 'package:expense_tracker/models/income_category.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:expense_tracker/widgets/credit_card_widget.dart';
+import 'package:expense_tracker/services/firestore_service.dart';
 
 class IncomeScreen extends StatefulWidget {
   const IncomeScreen({super.key});
@@ -9,22 +11,49 @@ class IncomeScreen extends StatefulWidget {
 }
 
 class _IncomeScreenState extends State<IncomeScreen> {
-  final List<String> _categories = ['Salary', 'Business', 'Freelance', 'Others'];
-  String _selectedCategory = 'Salary';
   final _incomeController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _firestoreService =
+      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
 
-  // Hard-coded financial data (to be replaced with dynamic data later on)
-  final double _totalBalance = 1500.00;
-  final double _income = 1000.00;
-  final double _expense = 500.00;
+  List<IncomeCategory> _categories = [];
+  IncomeCategory? _selectedCategory;
 
-  void _addCategory(String newCategory) {
-    if (newCategory.trim().isNotEmpty) {
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+  }
+
+  void _fetchCategories() {
+    _firestoreService.getIncomeCategories().listen((categories) {
       setState(() {
-        _categories.add(newCategory);
-        _selectedCategory = newCategory;
+        _categories = categories;
+        if (_categories.isNotEmpty) _selectedCategory = _categories[0];
       });
+    });
+  }
+
+  Future<void> _addCategory(String newCategoryName) async {
+    final category = await _firestoreService.addIncomeCategory(newCategoryName);
+    if (category != null) {
+      _updateUIWithNewCategory(category);
+    } else {
+      _showMessage('Category already exists');
     }
+  }
+
+  void _updateUIWithNewCategory(IncomeCategory category) {
+    setState(() {
+      _categories.add(category);
+      _selectedCategory = category;
+    });
+    _showMessage('Category added successfully');
+  }
+
+  void _showMessage(String message) {
+    final snackBar = SnackBar(content: Text(message));
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   Future<void> _showAddCategoryDialog() async {
@@ -74,15 +103,6 @@ class _IncomeScreenState extends State<IncomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              SizedBox(
-                height: 170, // Adjust the height as per your requirement
-                child: CreditCardWidget(
-                  totalBalance: _totalBalance,
-                  totalIncome: _income,
-                  totalExpenses: _expense,
-                ),
-              ),
-              const SizedBox(height: 15),
               TextFormField(
                 controller: _incomeController,
                 decoration: const InputDecoration(
@@ -102,16 +122,17 @@ class _IncomeScreenState extends State<IncomeScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
+                  child: DropdownButton<IncomeCategory>(
                     isExpanded: true,
                     value: _selectedCategory,
                     style: const TextStyle(color: Color(0xFF429690)),
-                    items: _categories.map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
+                    items: _categories.map((IncomeCategory category) {
+                      return DropdownMenuItem<IncomeCategory>(
+                        value: category,
+                        child: Text(category.name),
                       );
                     }).toList(),
+                    hint: const Text('Select Category'),
                     onChanged: (newValue) {
                       setState(() {
                         _selectedCategory = newValue!;
@@ -122,6 +143,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
               ),
               const SizedBox(height: 10),
               TextFormField(
+                controller: _descriptionController,
+                maxLength: 21,
                 decoration: const InputDecoration(
                   labelText: 'Description (Optional)',
                   hintText: 'Enter description',
@@ -132,25 +155,55 @@ class _IncomeScreenState extends State<IncomeScreen> {
               ),
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: _showAddCategoryDialog,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF429690),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: const Text('Add New Category'),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  // Handle the submission of the income data
-                  print('Income: ${_incomeController.text}');
-                  print('Category: $_selectedCategory');
+                onPressed: () async {
+                  // Save the new income to Firestore
+                  _firestoreService.addIncome(
+                    double.parse(_incomeController.text),
+                    _selectedCategory!.id,
+                    _selectedCategory!.name,
+                    _descriptionController.text,
+                  );
+                  // clear the text fields
+                  _incomeController.clear();
+                  _descriptionController.clear();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF429690),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 child: const Text('Add Income'),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: _showAddCategoryDialog,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF429690),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('Add New Income Category'),
+              ),
+              const SizedBox(height: 60),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/incomeList');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF429690),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('View All Income'),
+              ),
+              // button for view all income categories
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/incomeCategoryList');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF429690),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('View All Income Categories'),
               ),
             ],
           ),
