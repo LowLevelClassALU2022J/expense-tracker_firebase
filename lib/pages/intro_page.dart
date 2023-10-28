@@ -38,8 +38,8 @@ class IntroPage extends StatelessWidget {
                   context, '/login'); // Navigate to login screen
             },
             // text should be the primary color
-            style:
-                TextButton.styleFrom(foregroundColor: Theme.of(context).primaryColor),
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).primaryColor),
             child: const Text('Already have an account? Log In'),
           ),
         ],

@@ -160,8 +160,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                   _firestoreService.addExpense(
                     double.parse(_expenseController.text),
                     _selectedCategory!.id,
-                    _selectedCategory!.name,
                     _descriptionController.text,
+                    _selectedCategory!.name,
                   );
                   // clear the text fields
                   _expenseController.clear();

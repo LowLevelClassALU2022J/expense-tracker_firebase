@@ -153,16 +153,9 @@ class FirestoreService {
 
   // get total balance using firestore query to sum all incomes for a user
   Future<double> getTotalBalance() async {
-    final snapshot = await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('incomes')
-        .get();
-    double total = 0;
-    for (var doc in snapshot.docs) {
-      total += doc['amount'];
-    }
-    return total;
+    final totalIncome = await getTotalIncome();
+    final totalExpense = await getTotalExpense();
+    return totalIncome - totalExpense;
   }
 
   // get total income using firestore query to sum all incomes for a user

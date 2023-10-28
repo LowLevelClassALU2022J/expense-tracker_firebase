@@ -160,8 +160,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
                   _firestoreService.addIncome(
                     double.parse(_incomeController.text),
                     _selectedCategory!.id,
-                    _selectedCategory!.name,
                     _descriptionController.text,
+                    _selectedCategory!.name,
                   );
                   // clear the text fields
                   _incomeController.clear();
