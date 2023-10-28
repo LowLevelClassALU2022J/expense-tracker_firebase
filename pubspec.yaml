@@ -60,9 +60,16 @@ dev_dependencies:
 
 flutter_native_splash:
   color: "#429690"
-  image: assets/images/undraw_Savings_re_eq4w.png
+  image: assets/images/splash-img.png
   android: true
-  ios: true
+
+  android_12:
+    image: assets/images/splash-img.png
+    icon_background_color: "#429690"
+    android_gravity: 'center'
+
+  web: false
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -79,8 +86,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/intro.png
-    - assets/images/undraw_Savings_re_eq4w.png
-    - assets/images/undraw_savings_re_eq4w.svg
+    - assets/images/splash-img.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
