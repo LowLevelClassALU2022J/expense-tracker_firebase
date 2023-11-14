@@ -21,7 +21,7 @@ class IntroPage extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pushReplacementNamed(
-                  context, '/main'); // Navigate to main screen
+                  context, '/signup'); // Navigate to main screen
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,

@@ -18,6 +18,9 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   int _selectedIndex = 0;
+
+  User? _user;
+
   final List<Widget> _screens = [
     const HomeScreen(),
     const IncomeScreen(),
@@ -31,6 +34,13 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  Future<void> _fetchCurrentUser() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    setState(() {
+      _user = user;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,8 +49,8 @@ class _MainPageState extends State<MainPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            const DrawerHeader(
-              decoration: BoxDecoration(
+            DrawerHeader(
+              decoration: const BoxDecoration(
                 color: Color(0xFF429690),
               ),
               child: Column(
@@ -48,13 +58,16 @@ class _MainPageState extends State<MainPage> {
                   CircleAvatar(
                     radius: 40.0,
                     backgroundImage: CachedNetworkImageProvider(
-                      'https://i.pravatar.cc/150?img=7', // Put user image URL here
+                      // user profile or a unisex avatar link
+                      _user?.photoURL ??
+                          'https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png',
                     ),
                   ),
-                  SizedBox(), // Gives some spacing between the image and text
+                  const SizedBox(), // Gives some spacing between the image and text
                   Text(
-                    'John Doe',
-                    style: TextStyle(
+                    // display name from current user
+                    _user?.displayName ?? '',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                     ),

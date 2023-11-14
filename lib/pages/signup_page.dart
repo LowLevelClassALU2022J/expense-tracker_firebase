@@ -145,6 +145,9 @@ class _SignupPageState extends State<SignupPage> {
           assert(user.uid == _auth.currentUser!.uid);
 
           print('Google Sign In succeeded: $user');
+          // navigate to another /main screen
+          Navigator.of(context).pushReplacementNamed('/main');
+
           return user;
         }
       }
