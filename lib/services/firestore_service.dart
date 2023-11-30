@@ -5,11 +5,11 @@ import 'package:expense_tracker/models/income_category.dart';
 import 'package:expense_tracker/models/income.dart';
 
 class FirestoreService {
-  final String userId; // Add this
+  final String userId;
+  final FirebaseFirestore _firestore;
 
-  FirestoreService(this.userId); // Modify the constructor to accept UID
-
-  final _firestore = FirebaseFirestore.instance;
+  FirestoreService(this.userId, {FirebaseFirestore? firestore})
+      : this._firestore = firestore ?? FirebaseFirestore.instance;
 
   Stream<List<IncomeCategory>> getIncomeCategories() {
     return _firestore

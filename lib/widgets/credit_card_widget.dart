@@ -89,27 +89,30 @@ class CreditCardWidget extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-            const SizedBox(height: 25),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildInfoColumn(
-                  icon: Icons.arrow_downward,
-                  label: 'Income',
-                  amount: totalIncome,
-                  textColor: Colors.white,
-                ),
-                _buildInfoColumn(
-                  icon: Icons.arrow_upward,
-                  label: 'Expenses',
-                  amount: totalExpenses,
-                  textColor: totalExpenses > totalIncome
-                      ? Colors.red
-                      : totalExpenses == totalIncome
-                          ? const Color.fromRGBO(239, 108, 0, 1)
-                          : Colors.white,
-                ),
-              ],
+            const SizedBox(height: 15),
+            Expanded(
+              // Use Expanded to take up remaining vertical space
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildInfoColumn(
+                    icon: Icons.arrow_downward,
+                    label: 'Income',
+                    amount: totalIncome,
+                    textColor: Colors.white,
+                  ),
+                  _buildInfoColumn(
+                    icon: Icons.arrow_upward,
+                    label: 'Expenses',
+                    amount: totalExpenses,
+                    textColor: totalExpenses > totalIncome
+                        ? Colors.red
+                        : totalExpenses == totalIncome
+                            ? const Color.fromRGBO(239, 108, 0, 1)
+                            : Colors.white,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

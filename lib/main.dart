@@ -16,33 +16,65 @@ import 'package:firebase_auth/firebase_auth.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const ExpenseTracker());
+  runApp(ExpenseTracker());
 }
 
-class ExpenseTracker extends StatelessWidget {
-  const ExpenseTracker({super.key});
+class ExpenseTracker extends StatefulWidget {
+  final FirebaseAuth auth;
+
+  ExpenseTracker({Key? key, FirebaseAuth? firebaseAuth})
+      : auth = firebaseAuth ?? FirebaseAuth.instance,
+        super(key: key);
+
+  @override
+  _ExpenseTrackerState createState() => _ExpenseTrackerState();
+}
+
+class _ExpenseTrackerState extends State<ExpenseTracker> {
+  late Future<bool> isFirstOpen;
+  bool _isDisposed = false; // Flag to track if the widget is disposed
+
+  @override
+  void initState() {
+    super.initState();
+    isFirstOpen = checkFirstOpen();
+  }
 
   Future<bool> checkFirstOpen() async {
-    await Future.delayed(const Duration(seconds: 2)); // simulate a delay
-    final prefs = await SharedPreferences.getInstance();
-    bool isFirstTime = prefs.getBool('first_time') ?? true;
-    if (isFirstTime) {
-      await prefs.setBool('first_time', false);
+    try {
+      await Future.delayed(const Duration(seconds: 2)); // simulate a delay
+
+      if (_isDisposed) {
+        return false; // Return default value if the widget is disposed
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      bool isFirstTime = prefs.getBool('first_time') ?? true;
+      if (isFirstTime) {
+        await prefs.setBool('first_time', false);
+      }
+      return isFirstTime;
+    } catch (e) {
+      // Handle any exceptions here
+      return false; // Return default value in case of an error
     }
-    return isFirstTime;
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true; // Set the flag to true when the widget is disposed
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-
     return MaterialApp(
       title: 'Expense Tracker',
       theme: ThemeData(
         primaryColor: const Color(0xFF429690),
       ),
       home: StreamBuilder(
-        stream: auth.authStateChanges(),
+        stream: widget.auth.authStateChanges(),
         builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
           if (snapshot.connectionState == ConnectionState.active) {
             if (snapshot.data != null) {
