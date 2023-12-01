@@ -9,14 +9,16 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final FirebaseAuth auth;
+
+  MainPage({super.key, FirebaseAuth? firebaseAuth})
+      : auth = firebaseAuth ?? FirebaseAuth.instance;
 
   @override
   _MainPageState createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   int _selectedIndex = 0;
 
   User? _user;
@@ -35,7 +37,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> _fetchCurrentUser() async {
-    User? user = FirebaseAuth.instance.currentUser;
+    User? user = widget.auth.currentUser;
     setState(() {
       _user = user;
     });
@@ -107,7 +109,7 @@ class _MainPageState extends State<MainPage> {
                     await _showLogoutConfirmationDialog();
                 if (shouldLogout == true) {
                   try {
-                    await _auth.signOut();
+                    await widget.auth.signOut();
                     Navigator.pop(context); // Close the drawer
                     Navigator.pushNamed(context, '/login');
                   } catch (error) {

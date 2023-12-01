@@ -78,7 +78,9 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
         builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
           if (snapshot.connectionState == ConnectionState.active) {
             if (snapshot.data != null) {
-              return const MainPage(); // If the user is already authenticated.
+              return MainPage(
+                  firebaseAuth:
+                      widget.auth); // If the user is already authenticated.
             } else {
               return FutureBuilder<bool>(
                 future: checkFirstOpen(),
@@ -101,7 +103,7 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
         '/signup': (context) => const SignupPage(),
         '/login': (context) => const LoginPage(),
         '/intro': (context) => const IntroPage(),
-        '/main': (context) => const MainPage(),
+        '/main': (context) => MainPage(firebaseAuth: widget.auth),
         '/splash': (context) => const SplashScreen(),
         '/incomeList': (context) => const IncomeListScreen(),
         '/incomeCategoryList': (context) => EditIncomeCategoryScreen(),
