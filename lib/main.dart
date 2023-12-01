@@ -3,6 +3,7 @@ import 'package:expense_tracker/screens/expense_categories_list.dart';
 import 'package:expense_tracker/screens/expense_list.dart';
 import 'package:expense_tracker/screens/income_categories_list.dart';
 import 'package:expense_tracker/screens/income_list_screen.dart';
+import 'package:expense_tracker/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/pages/main_page.dart';
 import 'package:expense_tracker/screens/splash_screen.dart';
@@ -21,9 +22,15 @@ void main() async {
 
 class ExpenseTracker extends StatefulWidget {
   final FirebaseAuth auth;
+  final FirestoreService firestoreService;
 
-  ExpenseTracker({Key? key, FirebaseAuth? firebaseAuth})
+  ExpenseTracker(
+      {Key? key,
+      FirebaseAuth? firebaseAuth,
+      FirestoreService? firestoreService})
       : auth = firebaseAuth ?? FirebaseAuth.instance,
+        firestoreService = firestoreService ??
+            FirestoreService(FirebaseAuth.instance.currentUser!.uid),
         super(key: key);
 
   @override
@@ -79,8 +86,9 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
           if (snapshot.connectionState == ConnectionState.active) {
             if (snapshot.data != null) {
               return MainPage(
-                  firebaseAuth:
-                      widget.auth); // If the user is already authenticated.
+                firebaseAuth: widget.auth,
+                firestoreService: widget.firestoreService,
+              ); // If the user is already authenticated.
             } else {
               return FutureBuilder<bool>(
                 future: checkFirstOpen(),
@@ -103,12 +111,19 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
         '/signup': (context) => const SignupPage(),
         '/login': (context) => const LoginPage(),
         '/intro': (context) => const IntroPage(),
-        '/main': (context) => MainPage(firebaseAuth: widget.auth),
+        '/main': (context) => MainPage(
+            firebaseAuth: widget.auth,
+            firestoreService: widget.firestoreService),
         '/splash': (context) => const SplashScreen(),
-        '/incomeList': (context) => const IncomeListScreen(),
-        '/incomeCategoryList': (context) => EditIncomeCategoryScreen(),
-        '/expenseList': (context) => const ExpenseListScreen(),
-        '/expenseCategoryList': (context) => EditExpenseCategoryScreen(),
+        '/incomeList': (context) => IncomeListScreen(
+              firestoreService: widget.firestoreService,
+            ),
+        '/incomeCategoryList': (context) =>
+            EditIncomeCategoryScreen(firestoreService: widget.firestoreService),
+        '/expenseList': (context) =>
+            ExpenseListScreen(firestoreService: widget.firestoreService),
+        '/expenseCategoryList': (context) => EditExpenseCategoryScreen(
+            firestoreService: widget.firestoreService),
       },
     );
   }

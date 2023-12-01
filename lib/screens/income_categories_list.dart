@@ -4,20 +4,23 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class EditIncomeCategoryScreen extends StatefulWidget {
+  final FirestoreService firestoreService;
+
+  const EditIncomeCategoryScreen({Key? key, required this.firestoreService})
+      : super(key: key);
+
   @override
   _EditIncomeCategoryScreenState createState() =>
       _EditIncomeCategoryScreenState();
 }
 
 class _EditIncomeCategoryScreenState extends State<EditIncomeCategoryScreen> {
-  final _firestoreService =
-      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
   Stream<List<IncomeCategory>>? _categoriesStream;
 
   @override
   void initState() {
     super.initState();
-    _categoriesStream = _firestoreService.getIncomeCategories();
+    _categoriesStream = widget.firestoreService.getIncomeCategories();
   }
 
   Future<void> _showEditDialog(IncomeCategory category) async {
@@ -53,8 +56,8 @@ class _EditIncomeCategoryScreenState extends State<EditIncomeCategoryScreen> {
               onPressed: () async {
                 if (updatedName != null && updatedName!.trim().isNotEmpty) {
                   // Update category in Firebase
-                  await _firestoreService.updateIncomeCategory(
-                      updatedName!.trim(), category.id);
+                  await widget.firestoreService
+                      .updateIncomeCategory(updatedName!.trim(), category.id);
                   Navigator.of(context).pop();
                 }
               },
@@ -82,7 +85,9 @@ class _EditIncomeCategoryScreenState extends State<EditIncomeCategoryScreen> {
             TextButton(
               child: const Text('Yes'),
               onPressed: () {
-                _firestoreService.deleteIncomeCategory(category.id).then((_) {
+                widget.firestoreService
+                    .deleteIncomeCategory(category.id)
+                    .then((_) {
                   Navigator.of(context).pop();
                 }).catchError((error) {
                   print("Error deleting category: $error");

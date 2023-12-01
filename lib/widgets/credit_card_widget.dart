@@ -6,16 +6,14 @@ class CreditCardWidget extends StatelessWidget {
   late Future<double> totalBalance;
   late Future<double> totalIncome;
   late Future<double> totalExpenses;
+  final FirestoreService firestoreService;
 
-  final _firestoreService =
-      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
-
-  CreditCardWidget({super.key});
+  CreditCardWidget({super.key, required this.firestoreService});
 
   Future<List<double>> getCardData() async {
-    double balance = await _firestoreService.getTotalBalance();
-    double income = await _firestoreService.getTotalIncome();
-    double expenses = await _firestoreService.getTotalExpense();
+    double balance = await firestoreService.getTotalBalance();
+    double income = await firestoreService.getTotalIncome();
+    double expenses = await firestoreService.getTotalExpense();
     return [balance, income, expenses];
   }
 

@@ -1,10 +1,12 @@
 import 'package:expense_tracker/services/firestore_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class ReportScreen extends StatefulWidget {
-  const ReportScreen({super.key});
+  final FirestoreService firestoreService;
+
+  const ReportScreen({Key? key, required this.firestoreService})
+      : super(key: key);
 
   @override
   _ReportScreenState createState() => _ReportScreenState();
@@ -15,8 +17,6 @@ class _ReportScreenState extends State<ReportScreen>
   // Segment Control
   int _selectedValue = 0; // 0 for income, 1 for expense
 
-  final _firestoreService =
-      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
   late final Future<List<double>> _incomes;
   late final Future<List<double>> _expenses;
   double? topIncome;
@@ -29,14 +29,14 @@ class _ReportScreenState extends State<ReportScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _incomes = _firestoreService.getIncomesList();
-    _expenses = _firestoreService.getExpensesList();
+    _incomes = widget.firestoreService.getIncomesList();
+    _expenses = widget.firestoreService.getExpensesList();
     fetchTopValues();
   }
 
   void fetchTopValues() async {
-    final incomesList = await _firestoreService.getIncomesList();
-    final expensesList = await _firestoreService.getExpensesList();
+    final incomesList = await widget.firestoreService.getIncomesList();
+    final expensesList = await widget.firestoreService.getExpensesList();
 
     if (incomesList.isNotEmpty) {
       setState(() {

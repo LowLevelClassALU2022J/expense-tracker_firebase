@@ -5,21 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class ExpenseListScreen extends StatefulWidget {
-  const ExpenseListScreen({Key? key}) : super(key: key);
+  final FirestoreService firestoreService;
+  const ExpenseListScreen({Key? key, required this.firestoreService})
+      : super(key: key);
 
   @override
   _ExpenseListScreenState createState() => _ExpenseListScreenState();
 }
 
 class _ExpenseListScreenState extends State<ExpenseListScreen> {
-  final _firestoreService =
-      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
   Stream<List<Expense>>? _expensesStream;
 
   @override
   void initState() {
     super.initState();
-    _expensesStream = _firestoreService.getExpenses();
+    _expensesStream = widget.firestoreService.getExpenses();
   }
 
   @override
@@ -156,7 +156,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             ),
             TextButton(
               onPressed: () {
-                _firestoreService
+                widget.firestoreService
                     .updateExpense(
                   expense.id,
                   double.parse(amountController.text),
@@ -195,7 +195,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             TextButton(
               child: const Text('Yes'),
               onPressed: () {
-                _firestoreService.deleteExpense(expense.id).then((_) {
+                widget.firestoreService.deleteExpense(expense.id).then((_) {
                   Navigator.of(context).pop(true);
                 }).catchError((error) {
                   print("Error deleting expense: $error");

@@ -5,21 +5,22 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class IncomeListScreen extends StatefulWidget {
-  const IncomeListScreen({Key? key}) : super(key: key);
+  final FirestoreService firestoreService;
+
+  const IncomeListScreen({Key? key, required this.firestoreService})
+      : super(key: key);
 
   @override
   _IncomeListScreenState createState() => _IncomeListScreenState();
 }
 
 class _IncomeListScreenState extends State<IncomeListScreen> {
-  final _firestoreService =
-      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
   Stream<List<Income>>? _incomesStream;
 
   @override
   void initState() {
     super.initState();
-    _incomesStream = _firestoreService.getIncomes();
+    _incomesStream = widget.firestoreService.getIncomes();
   }
 
   @override
@@ -156,7 +157,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
             ),
             TextButton(
               onPressed: () {
-                _firestoreService
+                widget.firestoreService
                     .updateIncome(
                       income.id,
                       double.parse(amountController.text),
@@ -195,7 +196,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
               child: const Text('Yes'),
               onPressed: () {
                 // Delete the income from Firestore
-                _firestoreService.deleteIncome(income.id).then((_) {
+                widget.firestoreService.deleteIncome(income.id).then((_) {
                   Navigator.of(context).pop(true);
                 }).catchError((error) {
                   print("Error deleting income: $error");

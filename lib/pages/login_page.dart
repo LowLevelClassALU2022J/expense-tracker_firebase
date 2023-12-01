@@ -118,6 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                 backgroundColor: Theme.of(context).primaryColor,
               ),
               onPressed: signInWithGoogle,
+              key: const ValueKey('google'),
             ),
           ],
         ),

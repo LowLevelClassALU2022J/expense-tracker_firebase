@@ -7,23 +7,24 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final FirestoreService firestoreService;
+
+  const HomeScreen({Key? key, required this.firestoreService})
+      : super(key: key);
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _firestoreService =
-      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
   late Future<Income?> latestIncome;
   late Future<Expense?> latestExpense;
 
   @override
   void initState() {
     super.initState();
-    latestIncome = _firestoreService.getLatestIncome();
-    latestExpense = _firestoreService.getLatestExpense();
+    latestIncome = widget.firestoreService.getLatestIncome();
+    latestExpense = widget.firestoreService.getLatestExpense();
   }
 
   @override
@@ -37,7 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
             children: <Widget>[
               SizedBox(
                 height: 170,
-                child: CreditCardWidget(),
+                child: CreditCardWidget(
+                  firestoreService: widget.firestoreService,
+                ),
               ),
               const SizedBox(height: 15),
               ElevatedButton(

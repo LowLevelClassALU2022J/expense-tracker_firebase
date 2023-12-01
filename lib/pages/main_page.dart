@@ -2,6 +2,7 @@ import 'package:expense_tracker/screens/home_screen.dart';
 import 'package:expense_tracker/screens/income_screen.dart';
 import 'package:expense_tracker/screens/expense_screen.dart';
 import 'package:expense_tracker/screens/reports_screen.dart';
+import 'package:expense_tracker/services/firestore_service.dart';
 import 'package:expense_tracker/widgets/bottom_navigation_widget.dart';
 import 'package:expense_tracker/widgets/top_navigation_widget.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +11,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class MainPage extends StatefulWidget {
   final FirebaseAuth auth;
+  final FirestoreService firestoreService;
 
-  MainPage({super.key, FirebaseAuth? firebaseAuth})
+  MainPage(
+      {super.key, FirebaseAuth? firebaseAuth, required this.firestoreService})
       : auth = firebaseAuth ?? FirebaseAuth.instance;
 
   @override
@@ -23,12 +26,18 @@ class _MainPageState extends State<MainPage> {
 
   User? _user;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const IncomeScreen(),
-    const ExpenseScreen(),
-    const ReportScreen(),
-  ];
+  late List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeScreen(firestoreService: widget.firestoreService),
+      IncomeScreen(firestoreService: widget.firestoreService),
+      ExpenseScreen(firestoreService: widget.firestoreService),
+      ReportScreen(firestoreService: widget.firestoreService),
+    ];
+  }
 
   void _onBottomNavIndexChanged(int index) {
     setState(() {

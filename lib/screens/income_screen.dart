@@ -1,10 +1,12 @@
 import 'package:expense_tracker/models/income_category.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/services/firestore_service.dart';
 
 class IncomeScreen extends StatefulWidget {
-  const IncomeScreen({super.key});
+  final FirestoreService firestoreService;
+
+  const IncomeScreen({Key? key, required this.firestoreService})
+      : super(key: key);
 
   @override
   _IncomeScreenState createState() => _IncomeScreenState();
@@ -13,8 +15,6 @@ class IncomeScreen extends StatefulWidget {
 class _IncomeScreenState extends State<IncomeScreen> {
   final _incomeController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _firestoreService =
-      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
 
   List<IncomeCategory> _categories = [];
   IncomeCategory? _selectedCategory;
@@ -26,7 +26,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
   }
 
   void _fetchCategories() {
-    _firestoreService.getIncomeCategories().listen((categories) {
+    widget.firestoreService.getIncomeCategories().listen((categories) {
       setState(() {
         _categories = categories;
         if (_categories.isNotEmpty) _selectedCategory = _categories[0];
@@ -35,7 +35,8 @@ class _IncomeScreenState extends State<IncomeScreen> {
   }
 
   Future<void> _addCategory(String newCategoryName) async {
-    final category = await _firestoreService.addIncomeCategory(newCategoryName);
+    final category =
+        await widget.firestoreService.addIncomeCategory(newCategoryName);
     if (category != null) {
       _updateUIWithNewCategory(category);
     } else {
@@ -157,7 +158,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
               ElevatedButton(
                 onPressed: () async {
                   // Save the new income to Firestore
-                  _firestoreService.addIncome(
+                  widget.firestoreService.addIncome(
                     double.parse(_incomeController.text),
                     _selectedCategory!.id,
                     _descriptionController.text,

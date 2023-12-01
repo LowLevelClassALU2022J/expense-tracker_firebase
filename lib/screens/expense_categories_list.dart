@@ -4,20 +4,23 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class EditExpenseCategoryScreen extends StatefulWidget {
+  final FirestoreService firestoreService;
+
+  const EditExpenseCategoryScreen({Key? key, required this.firestoreService})
+      : super(key: key);
+
   @override
   _EditExpenseCategoryScreenState createState() =>
       _EditExpenseCategoryScreenState();
 }
 
 class _EditExpenseCategoryScreenState extends State<EditExpenseCategoryScreen> {
-  final _firestoreService =
-      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
   Stream<List<ExpenseCategory>>? _categoriesStream;
 
   @override
   void initState() {
     super.initState();
-    _categoriesStream = _firestoreService.getExpenseCategories();
+    _categoriesStream = widget.firestoreService.getExpenseCategories();
   }
 
   Future<void> _showEditDialog(ExpenseCategory category) async {
@@ -51,8 +54,8 @@ class _EditExpenseCategoryScreenState extends State<EditExpenseCategoryScreen> {
               child: const Text('Save'),
               onPressed: () async {
                 if (updatedName != null && updatedName!.trim().isNotEmpty) {
-                  await _firestoreService.updateExpenseCategory(
-                      updatedName!.trim(), category.id);
+                  await widget.firestoreService
+                      .updateExpenseCategory(updatedName!.trim(), category.id);
                   Navigator.of(context).pop();
                 }
               },
@@ -80,7 +83,9 @@ class _EditExpenseCategoryScreenState extends State<EditExpenseCategoryScreen> {
             TextButton(
               child: const Text('Yes'),
               onPressed: () {
-                _firestoreService.deleteExpenseCategory(category.id).then((_) {
+                widget.firestoreService
+                    .deleteExpenseCategory(category.id)
+                    .then((_) {
                   Navigator.of(context).pop();
                 }).catchError((error) {
                   print("Error deleting category: $error");

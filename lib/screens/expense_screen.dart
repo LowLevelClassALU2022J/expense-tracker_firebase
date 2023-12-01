@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/models/expense_category.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:expense_tracker/services/firestore_service.dart';
 
 class ExpenseScreen extends StatefulWidget {
-  const ExpenseScreen({super.key});
+  final FirestoreService firestoreService;
+
+  const ExpenseScreen({Key? key, required this.firestoreService})
+      : super(key: key);
 
   @override
   _ExpenseScreenState createState() => _ExpenseScreenState();
@@ -13,8 +15,6 @@ class ExpenseScreen extends StatefulWidget {
 class _ExpenseScreenState extends State<ExpenseScreen> {
   final _expenseController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _firestoreService =
-      FirestoreService(FirebaseAuth.instance.currentUser!.uid);
 
   List<ExpenseCategory> _categories = [];
   ExpenseCategory? _selectedCategory;
@@ -26,7 +26,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   }
 
   void _fetchCategories() {
-    _firestoreService.getExpenseCategories().listen((categories) {
+    widget.firestoreService.getExpenseCategories().listen((categories) {
       setState(() {
         _categories = categories;
         if (_categories.isNotEmpty) _selectedCategory = _categories[0];
@@ -36,7 +36,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   Future<void> _addCategory(String newCategoryName) async {
     final category =
-        await _firestoreService.addExpenseCategory(newCategoryName);
+        await widget.firestoreService.addExpenseCategory(newCategoryName);
     if (category != null) {
       _updateUIWithNewCategory(category);
     } else {
@@ -157,7 +157,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               ElevatedButton(
                 onPressed: () {
                   // Save the new expense to Firestore
-                  _firestoreService.addExpense(
+                  widget.firestoreService.addExpense(
                     double.parse(_expenseController.text),
                     _selectedCategory!.id,
                     _descriptionController.text,
