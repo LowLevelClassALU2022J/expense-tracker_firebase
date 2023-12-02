@@ -1,6 +1,5 @@
 import 'package:expense_tracker/models/expense_category.dart'; // Make sure you have this file
 import 'package:expense_tracker/services/firestore_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class EditExpenseCategoryScreen extends StatefulWidget {

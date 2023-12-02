@@ -1,6 +1,5 @@
 import 'package:expense_tracker/models/income.dart';
 import 'package:expense_tracker/services/firestore_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
