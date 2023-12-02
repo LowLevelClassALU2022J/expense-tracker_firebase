@@ -58,7 +58,6 @@ void main() {
 
       expect(find.widgetWithText(ElevatedButton, 'View All Income Categories'),
           findsOneWidget);
-    });
-  });
+    });
+  });
 }
-

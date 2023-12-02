@@ -52,6 +52,6 @@ void main() {
 
       expect(find.byIcon(Icons.edit), findsWidgets);
       expect(find.byIcon(Icons.delete), findsWidgets);
-    });
-  });
+    });
+  });
 }
